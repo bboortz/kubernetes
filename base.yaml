@@ -1,0 +1,97 @@
+#heat_template_version: 2013-05-23
+heat_template_version: 2014-10-16
+
+description: Simple template to deploy a single compute instance
+
+
+parameters:
+  stack_name:
+    type: string
+    label: stack_name 
+    description: Name of the stack
+    default: basic
+  instances:
+    type: string
+    label: instances
+    description: Number of instance 
+    default: 2
+  flavor:
+    type: string
+    label: flavor
+    description: Type of instance (flavor) 
+    default: 1 GB Performance
+  image:
+    type: string
+    label: flavor
+    description: Type of instance (flavor) 
+    default: Ubuntu 16.04 LTS (Xenial Xerus) (PVHVM)
+  public_network:
+    type: string
+    label: Public network name or ID
+    description: Public network with floating IP addresses.
+    default: PublicNet
+
+
+resources:
+  private_network:
+    type: OS::Neutron::Net
+
+  private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: private_network }
+      cidr: 192.168.0.0/23
+      dns_nameservers:
+        - 8.8.8.8
+
+#  router:
+#    type: OS::Neutron::Router
+#    properties:
+#      external_gateway_info:
+#        network: { get_param: public_network }
+
+#  router-interface:
+#    type: OS::Neutron::RouterInterface
+#    properties:
+#      router_id: { get_resource: router }
+#      subnet: { get_resource: private_subnet }
+
+    #  admin_security_group:
+    #    type: OS::Neutron::SecurityGroup
+    #    properties:
+    #      name: web_server_security_group
+    #      rules:
+    #      - protocol: icmp
+    #      - protocol: tcp
+    #        port_range_min: 22
+    #        port_range_max: 22
+    #  web_server_security_group:
+    #    type: OS::Neutron::SecurityGroup
+    #    properties:
+    #      name: web_server_security_group
+    #      rules:
+    #      - protocol: tcp
+    #        port_range_min: 443
+    #        port_range_max: 443
+
+  my_indexed_group:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: { get_param: instances }
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          # create a unique name for each server
+          # using its index in the group
+          name: 
+            str_replace:
+              template: stack%_instance_%index%
+              params:
+                "stack%": { get_param: stack_name }
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: ssh-key
+#          security_groups:
+#            - { get_resource: admin_security_group }
+#            - { get_resource: web_server_security_group }
+
