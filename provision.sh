@@ -13,6 +13,7 @@ ID=$$-$RANDOM
 TAGS="${STACK_NAME},${DATE},${ID}"
 
 DEBUG="--debug"
+DEBUG=""
 WAIT_DELAY=5
 
 ./venv/bin/openstack stack create -f table --parameter "stack_name=${STACK_NAME};instance_count=${INSTANCE_COUNT};flavor=${FLAVOR}" --tags "${TAGS}" --template ${STACK_FILE} ${STACK_NAME} ${DEBUG}

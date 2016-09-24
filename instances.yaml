@@ -35,6 +35,13 @@ parameters:
     label: Public network name or ID
     description: Public network with floating IP addresses.
     default: private
+  volume_size:
+    type: number
+    description: Size of the volume to be created.
+    default: 3
+    constraints:
+      - range: { min: 1, max: 1024 }
+        description: must be between 1 and 1024 Gb.
 
 
 resources:
@@ -55,42 +62,40 @@ resources:
           image: { get_param: image }
           flavor: { get_param: flavor }
           key_name: { get_param: ssh_key }
+          user_data_format: RAW
           user_data:
-          str_replace:
-          template: |
-            #!/bin/bash -v
-              apt-get install docker-engine python python-pip
-              pip install docker-compose
-              wget ..
-              docker-compuse up -d
+              str_replace:
+                template: |
+                  #!/bin/bash -v
+                  set -e
+                  set -u
+                  error() {
+                    _WC-NOTIFY_ --data-binary '{"status": "FAILURE"}'
+                    exit 1
+                  }
+                  trap 'error' ERR
+                  apt-get update
+                  apt-get upgrade -y -q
+                  DEBIAN_FRONTEND=noninteractive apt-get install -y -q --assume-yes  --force-yes docker.io python python-pip
+                  pip install docker-compose
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
+                  docker-compuse up -d
+                params:
+                  $param: { get_param: instance_count }
 
-  cinder_volume:
-    type: OS::Cinder::Volume
-    properties:
-    size: { get_param: volume_size }
-  
-  volume_attachment:
-    type: OS::Cinder::VolumeAttachment
-    properties:
-      volume_id: { get_resource: cinder_volume }
-      instance_uuid: { get_resource: nova_instance }
-      mountpoint: /dev/vdc
+#  cinder_volume:
+#    type: OS::Cinder::Volume
+#    properties:
+#      size: { get_param: volume_size }
+#      multiattach: True
 
-yum -y install httpd wordpress
-sed -i "/Deny from All/d" /etc/httpd/conf.d/wordpress.conf
-sed -i "s/Require local/Require all granted/" /etc/httpd/conf.d/wordpress.conf
-sed -i s/database_name_here/db_name/ /etc/wordpress/wp-config.php
-sed -i s/username_here/db_user/      /etc/wordpress/wp-config.php
-sed -i s/password_here/db_password/  /etc/wordpress/wp-config.php
-sed -i s/localhost/db_ipaddr/        /etc/wordpress/wp-config.php
-setenforce 0 # Otherwise net traffic with DB is disabled
-systemctl start httpd.service
-params:
-db_rootpassword: { get_param: db_root_password }
-db_name: { get_param: db_name }
-db_user: { get_param: db_username }
-db_password: { get_param: db_password }
-db_ipaddr: { get_attr: [DatabaseServer, networks, private, 0] }
+#  volume_attachment:
+#    type: OS::Cinder::VolumeAttachment
+#    properties:
+#      volume_id: { get_resource: cinder_volume }
+#      instance_uuid: { get_resource: instances }
+#      mountpoint: /dev/vdc
+
 #          security_groups:
 #            - { get_resource: admin_security_group }
 #            - { get_resource: web_server_security_group }
