@@ -1,5 +1,5 @@
 #heat_template_version: 2013-05-23
-heat_template_version: 2014-10-16
+heat_template_version: 2016-04-08
 
 description: Simple template to deploy a single compute instance
 
@@ -37,7 +37,7 @@ parameters:
     default: PublicNet
 
 resources:
-  network:
+  private_network:
     type: network.yaml
     properties:
       stack_name: { get_param: stack_name }
@@ -51,4 +51,4 @@ resources:
       flavor: { get_param: flavor }
       image: { get_param: image }
       ssh_key: { get_param: ssh_key }
-      private_network: { get_attr: [network, name] }
+      private_network: { get_attr: [private_network, name] }

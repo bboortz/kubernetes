@@ -1,5 +1,5 @@
 #heat_template_version: 2013-05-23
-heat_template_version: 2014-10-16
+heat_template_version: 2016-04-08
 
 description: Simple template to deploy a single compute instance
 
@@ -28,23 +28,24 @@ resources:
       cidr: 192.168.0.0/23
       dns_nameservers:
         - 8.8.8.8
+  
+  router:
+    type: OS::Neutron::Router
+    properties:
+      external_gateway_info:
+        network: { get_param: public_network }
+
+  router-interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: router }
+      subnet: { get_resource: private_subnet }
 
 outputs:
   name:
     description: The private network.
     value: { get_attr: [private_network, name] }
 
-#  router:
-#    type: OS::Neutron::Router
-#    properties:
-#      external_gateway_info:
-#        network: { get_param: public_network }
-
-#  router-interface:
-#    type: OS::Neutron::RouterInterface
-#    properties:
-#      router_id: { get_resource: router }
-#      subnet: { get_resource: private_subnet }
 
     #  admin_security_group:
     #    type: OS::Neutron::SecurityGroup

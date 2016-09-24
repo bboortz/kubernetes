@@ -9,6 +9,6 @@ if [ ! -d venv ]; then
 	virtualenv venv
 fi
 source venv/bin/activate
-pip install python-openstackclient python-heatclient
+pip install python-openstackclient python-heatclient python-novaclient python-neutronclient
 
 
