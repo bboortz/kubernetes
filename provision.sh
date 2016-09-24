@@ -26,3 +26,5 @@ done
 
 echo
 ./venv/bin/openstack stack show "${STACK_NAME}" 
+echo
+./venv/bin/openstack stack resource list "${STACK_NAME}" 
