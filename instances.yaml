@@ -94,14 +94,16 @@ resources:
                   touch 7
                   DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -q
                   touch 8
-                  DEBIAN_FRONTEND=noninteractive apt-get install -y -q --assume-yes docker.io python python-pip
+                  DEBIAN_FRONTEND=noninteractive RUNLEVEL=1 apt-get install -y -q --assume-yes docker.io python python-pip
                   touch 9
                   pip install docker-compose
                   touch 10
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
                   touch 11
+                  service docker restart
+                  service 12
                   docker-compose up -d
-                  touch 12
+                  touch 13
                   wc_notify --data-binary '{"status": "SUCCESS"}
                 params:
                   $param: { get_param: instance_count }
