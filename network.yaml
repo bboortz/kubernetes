@@ -20,6 +20,12 @@ parameters:
 resources:
   entry_network:
     type: OS::Neutron::Net
+    properties:
+      name:
+        str_replace:
+          template: stack%_entry_network
+          params:
+            "stack%": { get_param: stack_name }
 
   entry_subnet:
     type: OS::Neutron::Subnet
@@ -31,6 +37,12 @@ resources:
 
   app_network:
     type: OS::Neutron::Net
+    properties:
+      name:
+        str_replace:
+          template: stack%_app_network
+          params:
+            "stack%": { get_param: stack_name }
 
   app_subnet:
     type: OS::Neutron::Subnet
@@ -42,6 +54,12 @@ resources:
 
   services_network:
     type: OS::Neutron::Net
+    properties:
+      name:
+        str_replace:
+          template: stack%_services_network
+          params:
+            "stack%": { get_param: stack_name }
 
   services_subnet:
     type: OS::Neutron::Subnet
@@ -53,6 +71,12 @@ resources:
 
   admin_network:
     type: OS::Neutron::Net
+    properties:
+      name:
+        str_replace:
+          template: stack%_admin_network
+          params:
+            "stack%": { get_param: stack_name }
 
   admin_subnet:
     type: OS::Neutron::Subnet
