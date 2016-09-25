@@ -10,9 +10,14 @@ parameters:
     label: stack_name 
     description: Name of the stack
     default: basic
-  instance_count:
+  entry_instance_count:
     type: string
-    label: instance_count
+    label: entry_instance_count
+    description: Number of instance 
+    default: 2
+  app_instance_count:
+    type: string
+    label: app_instance_count
     description: Number of instance 
     default: 2
   flavor:
@@ -43,12 +48,12 @@ resources:
       stack_name: { get_param: stack_name }
       public_network: { get_param: public_network }
 
-  instances:
-    type: instances.yaml
+  app_instances:
+    type: app_instances.yaml
     properties:
       stack_name: { get_param: stack_name }
-      instance_count: { get_param: instance_count }
+      instance_count: { get_param: app_instance_count }
       flavor: { get_param: flavor }
       image: { get_param: image }
       ssh_key: { get_param: ssh_key }
-      private_network: { get_attr: [private_network, name] }
+      private_network: { get_attr: [network, name] }

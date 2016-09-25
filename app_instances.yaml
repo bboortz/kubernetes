@@ -56,7 +56,7 @@ resources:
           # using its index in the group
           name: 
             str_replace:
-              template: stack%_instance_%index%
+              template: stack%_appInstance_%index%
               params:
                 "stack%": { get_param: stack_name }
           image: { get_param: image }

@@ -29,13 +29,13 @@ resources:
       dns_nameservers:
         - 8.8.8.8
 
-  private_network:
+  app_network:
     type: OS::Neutron::Net
 
-  private_subnet:
+  app_subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: private_network }
+      network_id: { get_resource: app_network }
       cidr: 192.168.20.0/23
       dns_nameservers:
         - 8.8.8.8
@@ -76,8 +76,8 @@ resources:
 
 outputs:
   name:
-    description: The private network.
-    value: { get_attr: [private_network, name] }
+    description: The private application network.
+    value: { get_attr: [app_network, name] }
 
 
     #  admin_security_group:
