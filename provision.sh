@@ -27,6 +27,8 @@ while true; do
 done
 
 echo
+./venv/bin/openstack stack resource list "${STACK_NAME}" 
+echo
 ./venv/bin/openstack stack show "${STACK_NAME}" 
 echo
-./venv/bin/openstack stack resource list "${STACK_NAME}" 
+./venv/bin/openstack stack list --tags "${TAGS}" 

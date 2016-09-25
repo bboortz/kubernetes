@@ -14,7 +14,7 @@ TAGS="${STACK_NAME},${DATE},${ID}"
 
 WAIT_DELAY=5
 
-./venv/bin/openstack stack delete ${STACK_NAME}
+./venv/bin/openstack stack delete --yes ${STACK_NAME}
 
 while true; do
 	./venv/bin/openstack stack list | grep "DELETE_IN_PROGRESS" > /dev/null || break

@@ -24,7 +24,7 @@ parameters:
     type: string
     label: image
     description: Type of instance (flavor) 
-    default: Ubuntu 16.04 LTS (Xenial Xerus) (PVHVM)
+    default: CentOS 7 (PVHVM)
   ssh_key:
     type: string
     label: ssh_key
@@ -56,7 +56,7 @@ resources:
           # using its index in the group
           name: 
             str_replace:
-              template: stack%_appInstance_%index%
+              template: stack%_app_%index%
               params:
                 "stack%": { get_param: stack_name }
           image: { get_param: image }

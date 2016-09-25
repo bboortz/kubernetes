@@ -24,7 +24,7 @@ parameters:
     type: string
     label: image
     description: Type of instance (flavor) 
-    default: Ubuntu 16.04 LTS (Xenial Xerus) (PVHVM)
+    default: CentOS 7 (PVHVM)
   ssh_key:
     type: string
     label: ssh_key
@@ -45,6 +45,30 @@ parameters:
 
 
 resources:
+  signal_handle:
+    type: OS::Heat::SwiftSignalHandle
+
+  wait_on_server:
+    type: OS::Heat::SwiftSignal
+    properties:
+      handle: {get_resource: signal_handle}
+      count: 1
+      timeout: 600
+#  wait_condition:
+#    type: OS::Heat::WaitCondition
+#    properties:
+#      handle: { get_resource: wh }
+#      count: 1
+#      timeout: 300
+
+#  wh:
+#    type: OS::Heat::WaitConditionHandle
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: private_network }
+
   docker_registry_instances:
     type: OS::Heat::ResourceGroup
     properties:
@@ -56,12 +80,14 @@ resources:
           # using its index in the group
           name: 
             str_replace:
-              template: stack%_serviceInstanceDockerReg_%index%
+              template: stack%_serviceDockerReg_%index%
               params:
                 "stack%": { get_param: stack_name }
           image: { get_param: image }
           flavor: { get_param: flavor }
           key_name: { get_param: ssh_key }
+          networks:
+            - port: { get_resource: port }
           user_data_format: RAW
           user_data:
               str_replace:
@@ -115,7 +141,7 @@ resources:
           # using its index in the group
           name: 
             str_replace:
-              template: stack%_serviceInstanceConsul_%index%
+              template: stack%_serviceConsul_%index%
               params:
                 "stack%": { get_param: stack_name }
           image: { get_param: image }
@@ -124,6 +150,9 @@ resources:
           user_data_format: RAW
           user_data:
               str_replace:
+                params:
+                  wc_notify:   { get_attr: ['signal_handle', 'curl_cli'] }
+                  $param: { get_param: instance_count }
                 template: |
                   #!/bin/bash -v
                   touch 1
@@ -138,29 +167,28 @@ resources:
                   touch 3
                   trap 'error' ERR
                   touch 4
-                  ufw default deny
-                  ufw allow ssh
-                  ufw allow 5000
-                  ufw --force enable
+                  echo Firewall settings
                   touch 5
-                  apt-get update
+                  yum -y update
                   touch 6
-                  DEBIAN_FRONTEND=noninteractive apt-get install -y unattended-upgrades
                   touch 7
-                  DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -q
                   touch 8
-                  DEBIAN_FRONTEND=noninteractive RUNLEVEL=1 apt-get install -y -q --assume-yes docker.io python python-pip
+                  yum -y install fail2ban
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/fail2ban/jail.local
+                  cp jail.local /etc/fail2ban
+                  systemctl enable fail2ban
+                  service fail2ban restart
                   touch 9
-                  pip install docker-compose
-                  touch 10
-                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/consul/docker-compose.yml
-                  touch 11
+                  yum -y install docker python python-pip
+                  systemctl enable docker
                   service docker restart
+                  touch 10
+                  pip install docker-compose
+                  touch 11
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/consul/docker-compose.yml
                   service 12
                   docker-compose up -d
                   touch 13
                   wc_notify --data-binary '{"status": "SUCCESS"}
-                params:
-                  $param: { get_param: instance_count }
 
 
