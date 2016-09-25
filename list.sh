@@ -21,6 +21,6 @@ WAIT_DELAY=5
 	echo 
 	echo "Stack: $f"
 	./venv/bin/openstack stack resource list $f
-	./venv/bin/openstack stack resource list base --long -n 2
+	./venv/bin/openstack stack resource list $f --long -n 2
 done
 

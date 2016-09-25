@@ -20,6 +20,11 @@ parameters:
     label: app_instance_count
     description: Number of instance 
     default: 2
+  service_instance_count:
+    type: string
+    label: entry_instance_count
+    description: Number of instance 
+    default: 2
   flavor:
     type: string
     label: flavor
@@ -53,6 +58,16 @@ resources:
     properties:
       stack_name: { get_param: stack_name }
       instance_count: { get_param: app_instance_count }
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      ssh_key: { get_param: ssh_key }
+      private_network: { get_attr: [network, name] }
+
+  service_instances:
+    type: app_instances.yaml
+    properties:
+      stack_name: { get_param: stack_name }
+      instance_count: { get_param: service_instance_count }
       flavor: { get_param: flavor }
       image: { get_param: image }
       ssh_key: { get_param: ssh_key }
