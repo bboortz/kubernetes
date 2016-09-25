@@ -45,24 +45,25 @@ parameters:
 
 
 resources:
-  signal_handle:
+  signal_handle_dockerReg:
     type: OS::Heat::SwiftSignalHandle
 
-  wait_on_server:
+  wait_on_server_docker_Reg:
     type: OS::Heat::SwiftSignal
     properties:
-      handle: {get_resource: signal_handle}
-      count: 1
+      handle: {get_resource: signal_handle_dockerReg}
+      count: { get_param: instance_count }
       timeout: 600
-#  wait_condition:
-#    type: OS::Heat::WaitCondition
-#    properties:
-#      handle: { get_resource: wh }
-#      count: 1
-#      timeout: 300
 
-#  wh:
-#    type: OS::Heat::WaitConditionHandle
+  signal_handle_consul:
+    type: OS::Heat::SwiftSignalHandle
+
+  wait_on_server_consul:
+    type: OS::Heat::SwiftSignal
+    properties:
+      handle: {get_resource: signal_handle_consul}
+      count: { get_param: instance_count }
+      timeout: 600
 
   port:
     type: OS::Neutron::Port
@@ -97,11 +98,10 @@ resources:
                   $param: { get_param: instance_count }
                 template: |
                   #!/bin/bash -v
-                  touch 1
+                  echo "*** START"
                   set -e
                   set -u
                   cd /root
-                  touch 2
                   error() {
                     echo "An error occured. please see stack trace:"
                     local frame=0
@@ -112,32 +112,31 @@ resources:
                     wc_notify --data-binary '{"status": "FAILURE"}'
                     exit 1
                   }
-                  touch 3
                   trap 'error' ERR
-                  touch 4
-                  echo Firewall settings
-                  touch 5
+                  echo "*** firewall"
+                  echo "*** os update"
                   yum -y update
-                  touch 6
-                  touch 7
-                  touch 8
+                  yum -y install yum-cron
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/yum-cron/yum-cron.conf
+                  cp yum-cron.conf /etc/yum/
+                  systemctl enable yum-cron
+                  systemctl restart yum-cron
+                  echo "*** fail2ban"
                   yum -y install fail2ban
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/fail2ban/jail.local
-                  cp jail.local /etc/fail2ban
+                  cp jail.local /etc/fail2ban/
                   systemctl enable fail2ban
-                  service fail2ban restart
-                  touch 9
+                  systemctl restart fail2ban 
+                  echo "*** docker"
                   yum -y install docker python python-pip
                   systemctl enable docker
-                  sleep 2
-                  service docker restart
-                  touch 10
-                  pip install docker-compose
-                  touch 11
+                  pip install --upgrade docker-compose
+                  systemctl --no-block start docker
+                  until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
+                  echo "*** consul"
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
-                  service 12
                   docker-compose up -d
-                  touch 13
+                  echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
 
   consul_instances:
@@ -165,47 +164,45 @@ resources:
                   $param: { get_param: instance_count }
                 template: |
                   #!/bin/bash -v
-                  touch 1
+                  echo "*** START"
                   set -e
                   set -u
                   cd /root
-                  touch 2
                   error() {
+                    echo "An error occured. please see stack trace:"
+                    local frame=0
+                    while caller $frame; do
+                      ((frame++));
+                    done
+                    echo "$*"
                     wc_notify --data-binary '{"status": "FAILURE"}'
                     exit 1
                   }
-                  touch 3
                   trap 'error' ERR
-                  touch 4
-                  echo Firewall settings
-                  touch 5
+                  echo "*** firewall"
+                  echo "*** os update"
                   yum -y update
-                  touch 6
                   yum -y install yum-cron
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/yum-cron/yum-cron.conf
                   cp yum-cron.conf /etc/yum/
                   systemctl enable yum-cron
                   systemctl restart yum-cron
+                  echo "*** fail2ban"
                   yum -y install fail2ban
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/fail2ban/jail.local
                   cp jail.local /etc/fail2ban/
                   systemctl enable fail2ban
                   systemctl restart fail2ban 
-                  touch 7
+                  echo "*** docker"
                   yum -y install docker python python-pip
                   systemctl enable docker
                   pip install --upgrade docker-compose
-                  touch 8
                   systemctl --no-block start docker
                   until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
-                  touch 9
-                  # service docker start
-                  touch 10
-                  touch 11
+                  echo "*** consul"
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/consul/docker-compose.yml
-                  service 12
                   docker-compose up -d
-                  touch 13
+                  echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
 
 
