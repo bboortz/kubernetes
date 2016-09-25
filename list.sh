@@ -18,6 +18,9 @@ WAIT_DELAY=5
 
 
 ./venv/bin/openstack stack list -f value | awk '{ print $2 }' | while read f; do
+	echo 
+	echo "Stack: $f"
 	./venv/bin/openstack stack resource list $f
+	./venv/bin/openstack stack resource list base --long -n 2
 done
 
