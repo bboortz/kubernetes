@@ -88,9 +88,13 @@ resources:
           key_name: { get_param: ssh_key }
           networks:
             - port: { get_resource: port }
+#            - network: public
           user_data_format: RAW
           user_data:
               str_replace:
+                params:
+                  wc_notify:   { get_attr: ['signal_handle', 'curl_cli'] }
+                  $param: { get_param: instance_count }
                 template: |
                   #!/bin/bash -v
                   touch 1
@@ -99,36 +103,42 @@ resources:
                   cd /root
                   touch 2
                   error() {
+                    echo "An error occured. please see stack trace:"
+                    local frame=0
+                    while caller $frame; do
+                      ((frame++));
+                    done
+                    echo "$*"
                     wc_notify --data-binary '{"status": "FAILURE"}'
                     exit 1
                   }
                   touch 3
                   trap 'error' ERR
                   touch 4
-                  ufw default deny
-                  ufw allow ssh
-                  ufw allow 5000
-                  ufw --force enable
+                  echo Firewall settings
                   touch 5
-                  apt-get update
+                  yum -y update
                   touch 6
-                  DEBIAN_FRONTEND=noninteractive apt-get install -y unattended-upgrades
                   touch 7
-                  DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -q
                   touch 8
-                  DEBIAN_FRONTEND=noninteractive RUNLEVEL=1 apt-get install -y -q --assume-yes docker.io python python-pip
+                  yum -y install fail2ban
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/fail2ban/jail.local
+                  cp jail.local /etc/fail2ban
+                  systemctl enable fail2ban
+                  service fail2ban restart
                   touch 9
-                  pip install docker-compose
-                  touch 10
-                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
-                  touch 11
+                  yum -y install docker python python-pip
+                  systemctl enable docker
+                  sleep 2
                   service docker restart
+                  touch 10
+                  pip install docker-compose
+                  touch 11
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
                   service 12
                   docker-compose up -d
                   touch 13
                   wc_notify --data-binary '{"status": "SUCCESS"}
-                params:
-                  $param: { get_param: instance_count }
 
   consul_instances:
     type: OS::Heat::ResourceGroup
@@ -171,19 +181,26 @@ resources:
                   touch 5
                   yum -y update
                   touch 6
-                  touch 7
-                  touch 8
+                  yum -y install yum-cron
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/yum-cron/yum-cron.conf
+                  cp yum-cron.conf /etc/yum/
+                  systemctl enable yum-cron
+                  systemctl restart yum-cron
                   yum -y install fail2ban
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/fail2ban/jail.local
-                  cp jail.local /etc/fail2ban
+                  cp jail.local /etc/fail2ban/
                   systemctl enable fail2ban
-                  service fail2ban restart
-                  touch 9
+                  systemctl restart fail2ban 
+                  touch 7
                   yum -y install docker python python-pip
                   systemctl enable docker
-                  service docker restart
+                  pip install --upgrade docker-compose
+                  touch 8
+                  systemctl --no-block start docker
+                  until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
+                  touch 9
+                  # service docker start
                   touch 10
-                  pip install docker-compose
                   touch 11
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/consul/docker-compose.yml
                   service 12
