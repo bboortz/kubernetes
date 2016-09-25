@@ -129,13 +129,14 @@ resources:
                   systemctl restart fail2ban 
                   echo "*** docker"
                   yum -y install docker python python-pip
-                  systemctl enable docker
                   pip install --upgrade docker-compose
+                  systemctl enable docker
                   systemctl --no-block start docker
                   until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
                   echo "*** consul"
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
-                  docker-compose up -d
+                  until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
+                  /bin/bash -l -c "docker-compose up -d"
                   echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
 
@@ -195,13 +196,14 @@ resources:
                   systemctl restart fail2ban 
                   echo "*** docker"
                   yum -y install docker python python-pip
-                  systemctl enable docker
                   pip install --upgrade docker-compose
+                  systemctl enable docker
                   systemctl --no-block start docker
                   until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
                   echo "*** consul"
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/consul/docker-compose.yml
-                  docker-compose up -d
+                  until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
+                  /bin/bash -l -c "docker-compose up -d"
                   echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
 
