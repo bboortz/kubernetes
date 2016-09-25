@@ -124,6 +124,6 @@ resources:
                   echo "*** base software"
                   yum -y install python python-pip git lynx gpg
                   echo "*** ansible"
-                  pip install --upgrade pip ansible python-openstackclient python-heatclient python-novaclient python-neutronclient python-swiftclient netaddr
+                  pip install --upgrade pip ansible python-openstackclient python-heatclient python-novaclient python-neutronclient python-swiftclient netaddr shade
                   echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
