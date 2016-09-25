@@ -136,7 +136,7 @@ resources:
                   echo "*** consul"
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/docker_registry/docker-compose.yml
                   until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
-                  /bin/bash -l -c "docker-compose up -d"
+                  sudo docker-compose up -d
                   echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
 
@@ -180,6 +180,9 @@ resources:
                     exit 1
                   }
                   trap 'error' ERR
+                  echo "*** basic settings"
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/sudo/sudoers
+                  cp sudoers /etc/
                   echo "*** firewall"
                   echo "*** os update"
                   yum -y update
@@ -203,7 +206,7 @@ resources:
                   echo "*** consul"
                   wget https://raw.githubusercontent.com/bboortz/kubernetes/master/consul/docker-compose.yml
                   until systemctl is-enabled docker; do echo "starting docker ..."; sleep 1; done
-                  /bin/bash -l -c "docker-compose up -d"
+                  sudo docker-compose up -d
                   echo "*** SUCCESS"
                   wc_notify --data-binary '{"status": "SUCCESS"}
 
