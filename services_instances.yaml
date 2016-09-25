@@ -89,7 +89,7 @@ resources:
           key_name: { get_param: ssh_key }
           networks:
             - port: { get_resource: port }
-#            - network: public
+            - network: 00000000-0000-0000-0000-000000000000
           user_data_format: RAW
           user_data:
               str_replace:
