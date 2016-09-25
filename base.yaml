@@ -37,7 +37,7 @@ parameters:
     default: PublicNet
 
 resources:
-  private_network:
+  network:
     type: network.yaml
     properties:
       stack_name: { get_param: stack_name }

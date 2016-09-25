@@ -18,6 +18,17 @@ parameters:
 
 
 resources:
+  entry_network:
+    type: OS::Neutron::Net
+
+  entry_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: entry_network }
+      cidr: 192.168.1.0/23
+      dns_nameservers:
+        - 8.8.8.8
+
   private_network:
     type: OS::Neutron::Net
 
@@ -25,7 +36,29 @@ resources:
     type: OS::Neutron::Subnet
     properties:
       network_id: { get_resource: private_network }
-      cidr: 192.168.0.0/23
+      cidr: 192.168.20.0/23
+      dns_nameservers:
+        - 8.8.8.8
+
+  services_network:
+    type: OS::Neutron::Net
+
+  services_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: services_network}
+      cidr: 192.168.40.0/23
+      dns_nameservers:
+        - 8.8.8.8
+
+  admin_network:
+    type: OS::Neutron::Net
+
+  admin_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: admin_network}
+      cidr: 192.168.240.0/23
       dns_nameservers:
         - 8.8.8.8
   
