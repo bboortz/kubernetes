@@ -1,0 +1,129 @@
+#heat_template_version: 2013-05-23
+heat_template_version: 2016-04-08
+
+description: Simple template to deploy a single compute instance
+
+
+parameters:
+  stack_name:
+    type: string
+    label: stack_name 
+    description: Name of the stack
+    default: basic
+  instance_count:
+    type: string
+    label: instance_count
+    description: Number of instance 
+    default: 2
+  flavor:
+    type: string
+    label: flavor
+    description: Type of instance (flavor) 
+    default: 1 GB Performance
+  image:
+    type: string
+    label: image
+    description: Type of instance (flavor) 
+    default: CentOS 7 (PVHVM)
+  ssh_key:
+    type: string
+    label: ssh_key
+    description: The ssh key for admin connections
+    default: ssh-key
+  private_network:
+    type: string
+    label: Public network name or ID
+    description: Public network with floating IP addresses.
+    default: private
+  volume_size:
+    type: number
+    description: Size of the volume to be created.
+    default: 3
+    constraints:
+      - range: { min: 1, max: 1024 }
+        description: must be between 1 and 1024 Gb.
+
+
+resources:
+  signal_handle_ansible:
+    type: OS::Heat::SwiftSignalHandle
+
+  wait_on_server_ansible:
+    type: OS::Heat::SwiftSignal
+    properties:
+      handle: {get_resource: signal_handle_ansible}
+      count: 1
+      timeout: 600
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network: { get_param: private_network }
+
+  ansible_instances:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: 1
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          # create a unique name for each server
+          # using its index in the group
+          name: 
+            str_replace:
+              template: stack%_serviceAnsible_%index%
+              params:
+                "stack%": { get_param: stack_name }
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          key_name: { get_param: ssh_key }
+          networks:
+            - port: { get_resource: port }
+            - network: 00000000-0000-0000-0000-000000000000
+            - network: 11111111-1111-1111-1111-111111111111
+          user_data_format: RAW
+          user_data:
+              str_replace:
+                params:
+                  wc_notify:   { get_attr: ['signal_handle_ansible', 'curl_cli'] }
+                  $param: { get_param: instance_count }
+                template: |
+                  #!/bin/bash -v
+                  echo "*** START"
+                  set -e
+                  set -u
+                  cd /root
+                  error() {
+                    echo "An error occured. please see stack trace:"
+                    local frame=0
+                    while caller $frame; do
+                      ((frame++));
+                    done
+                    echo "$*"
+                    wc_notify --data-binary '{"status": "FAILURE"}'
+                    exit 1
+                  }
+                  trap 'error' ERR
+                  echo "*** basic settings"
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/sudo/sudoers
+                  cp sudoers /etc/
+                  echo "*** firewall"
+                  echo "*** os update"
+                  yum -y update
+                  yum -y install yum-cron
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/yum-cron/yum-cron.conf
+                  cp yum-cron.conf /etc/yum/
+                  systemctl enable yum-cron
+                  systemctl restart yum-cron
+                  echo "*** fail2ban"
+                  yum -y install fail2ban
+                  wget https://raw.githubusercontent.com/bboortz/kubernetes/master/fail2ban/jail.local
+                  cp jail.local /etc/fail2ban/
+                  systemctl enable fail2ban
+                  systemctl restart fail2ban 
+                  echo "*** base software"
+                  yum -y install python python-pip git lynx gpg
+                  echo "*** ansible"
+                  pip install --upgrade pip ansible python-openstackclient python-heatclient python-novaclient python-neutronclient python-swiftclient netaddr
+                  echo "*** SUCCESS"
+                  wc_notify --data-binary '{"status": "SUCCESS"}

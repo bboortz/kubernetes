@@ -99,9 +99,18 @@ resources:
 #      subnet: { get_resource: private_subnet }
 
 outputs:
-  name:
+  entry_network:
+    description: The private entry network.
+    value: { get_attr: [entry_network, name] }
+  app_network:
     description: The private application network.
     value: { get_attr: [app_network, name] }
+  serviceis_network:
+    description: The private service network.
+    value: { get_attr: [services_network, name] }
+  admin_network:
+    description: The private admin network.
+    value: { get_attr: [admin_network, name] }
 
 
     #  admin_security_group:
