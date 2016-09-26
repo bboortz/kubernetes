@@ -40,6 +40,11 @@ parameters:
     label: ssh_key
     description: The ssh key for admin connections
     default: ssh-key
+  ssh_key_admin:
+    type: string
+    label: ssh_key
+    description: The ssh key for admin connections
+    default: ssh-key-admin
   public_network:
     type: string
     label: Public network name or ID
@@ -61,14 +66,24 @@ resources:
 #      flavor: { get_param: flavor }
 #      image: { get_param: image }
 #      ssh_key: { get_param: ssh_key }
-#      private_network: { get_attr: [network, name] }
+#      private_network: { get_attr: [network, app_network] }
 
-  service_instances:
-    type: services_instances.yaml
+#  service_instances:
+#    type: services_instances.yaml
+#    properties:
+#      stack_name: { get_param: stack_name }
+#     instance_count: { get_param: service_instance_count }
+#      flavor: { get_param: flavor }
+#     image: { get_param: image }
+#     ssh_key: { get_param: ssh_key }
+#     private_network: { get_attr: [network, services_network] }
+
+  admin_instances:
+    type: admin_instances.yaml
     properties:
       stack_name: { get_param: stack_name }
-      instance_count: { get_param: service_instance_count }
+      instance_count: 1
       flavor: { get_param: flavor }
       image: { get_param: image }
-      ssh_key: { get_param: ssh_key }
-      private_network: { get_attr: [network, name] }
+      ssh_key: { get_param: ssh_key_admin }
+      private_network: { get_attr: [network, admin_network] }
