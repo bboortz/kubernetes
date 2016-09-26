@@ -1,26 +1,7 @@
 #!/bin/bash
 
-set -i
-set -u
+source $( readlink -f ${0%/*} )/lib.sh
 
-STACK_FILE="base.yaml"
-STACK_NAME="base"
-INSTANCE_COUNT=1
-FLAVOR="1 GB Performance"
+f_list_stack
 
-DATE=$( date "+%s" )
-ID=$$-$RANDOM
-TAGS="${STACK_NAME},${DATE},${ID}"
-
-DEBUG="--debug"
-DEBUG=""
-WAIT_DELAY=5
-
-
-./venv/bin/openstack stack list -f value | awk '{ print $2 }' | while read f; do
-	echo 
-	echo "Stack: $f"
-	./venv/bin/openstack stack resource list $f
-	./venv/bin/openstack stack resource list $f --long -n 2
-done
 
